@@ -73,7 +73,8 @@ exports.list = function (req, res) {
     if (!error && response.statusCode == 200) {
       var $ = cheerio.load(body),
           aTags = $('a'),
-          alternatesDom = $('link[rel="alternate"]');
+          alternatesDom = $('link[rel="alternate"]'),
+          images = $('img');
 
       if (canonical === '') {
         canonical = $('link[rel="canonical"]')[0].attribs.href.slice(0, -1);
@@ -85,15 +86,13 @@ exports.list = function (req, res) {
 
       getLinks(aTags, canonical, alternates);
 
-      var images = $('img'),
-          assets = [];
-      for (var f = 0; f < images.length; f += 1) {
-        assets.push(canonical + images[f].attribs.src);
-      }
-
       sitemap[response.request.uri.href] = {};
-      sitemap[response.request.uri.href].assets = assets;
+      sitemap[response.request.uri.href].assets = [];
       sitemap[response.request.uri.href].visited = true;
+
+      for (var f = 0; f < images.length; f += 1) {
+        sitemap[response.request.uri.href].assets.push(canonical + images[f].attribs.src);
+      }
 
       requestNextLink();
     } else {
