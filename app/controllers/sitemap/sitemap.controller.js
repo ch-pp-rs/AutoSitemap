@@ -6,48 +6,44 @@ exports.list = function (req, res) {
   var sitemapUrl = req.query.url,
       sitemap = {},
       noRequests = 0,
-      limit = 10,
+      limit = 50,
       alternates = {},
       canonical = '';
 
-  function getSitemap(url) {
-    noRequests += 1;
-    if (noRequests < limit) {
-      request({url: url}, callback);
-    } else {
-      var xmlBody = [{
-        urlset: [
-          {
-            _attr: {
-              xmlns: 'http://www.sitemaps.org/schemas/sitemap/0.9',
-              'xmlns:image': 'http://www.google.com/schemas/sitemap-image/1.1'
-            }
-          }]
-      }];
+  function sendXmlResponse() {
+    var xmlBody = [{
+      'urlset': [
+        {
+          '_attr': {
+            'xmlns': 'http://www.sitemaps.org/schemas/sitemap/0.9',
+            'xmlns:image': 'http://www.google.com/schemas/sitemap-image/1.1'
+          }
+        }]
+    }];
 
-      for (var link in sitemap) {
-        var siteMapItem = [
-          {loc: link}
-        ];
+    for (var link in sitemap) {
+      var siteMapItem = [
+        {'loc': link}
+      ];
 
-        for (var asset in sitemap[link].assets) {
-          siteMapItem.push({'image:image': [{'image:loc': sitemap[link].assets[asset]}]});
-        }
-
-        xmlBody[0].urlset.push({
-          url: siteMapItem
-        })
+      for (var asset in sitemap[link].assets) {
+        siteMapItem.push({'image:image': [{'image:loc': sitemap[link].assets[asset]}]});
       }
 
-      res.set('Content-Type', 'text/xml');
-      res.send(xml(xmlBody, true));
+      xmlBody[0].urlset.push({
+        'url': siteMapItem
+      })
     }
+
+    res.set('Content-Type', 'text/xml');
+    res.send(xml(xmlBody, true));
   }
 
   function requestNextLink() {
     for (var link in sitemap) {
       if (sitemap[link].visited !== true) {
         sitemap[link].visited = true;
+
         getSitemap(link);
 
         break;
@@ -55,7 +51,7 @@ exports.list = function (req, res) {
     }
 
     if (!request) {
-      res.json(sitemap);
+      sendXmlResponse();
     }
   }
 
@@ -73,12 +69,11 @@ exports.list = function (req, res) {
     }
   }
 
-  function callback(error, response, body) {
+  function scrapePage(error, response, body) {
     if (!error && response.statusCode == 200) {
       var $ = cheerio.load(body),
-          aTags = $('a');
-
-      var alternatesDom = $('link[rel="alternate"]');
+          aTags = $('a'),
+          alternatesDom = $('link[rel="alternate"]');
 
       if (canonical === '') {
         canonical = $('link[rel="canonical"]')[0].attribs.href.slice(0, -1);
@@ -101,11 +96,17 @@ exports.list = function (req, res) {
       sitemap[response.request.uri.href].visited = true;
 
       requestNextLink();
-
     } else {
-      console.log('res: ++++ ', error);
-
       requestNextLink();
+    }
+  }
+
+  function getSitemap(url) {
+    noRequests += 1;
+    if (noRequests < limit) {
+      request({url: url}, scrapePage);
+    } else {
+      sendXmlResponse();
     }
   }
 

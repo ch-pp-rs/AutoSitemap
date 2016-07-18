@@ -6,7 +6,6 @@ var express = require('express');        // call express
 var app = express();                 // define our app using express
 var bodyParser = require('body-parser');
 var sitemap = require('./app/controllers/sitemap/sitemap.controller');
-var timeout = require('connect-timeout');
 
 // configure app to use bodyParser()
 // this will let us get the data from a POST
@@ -21,11 +20,6 @@ var router = express.Router();              // get an instance of the express Ro
 
 // middleware to use for all requests
 router.use(function (req, res, next) {
-  // do logging
-  console.log('Something is happening.');
-  // Website you wish to allow to connect
-  //res.setHeader('Access-Control-Allow-Origin', 'http://dimpdigital.com');
-  res.setHeader('Access-Control-Allow-Origin', '*');
   next(); // make sure we go to the next routes and don't stop here
 });
 
@@ -35,7 +29,6 @@ router.route('/sitemap').get(sitemap.list);
 // REGISTER OUR ROUTES -------------------------------
 // all of our routes will be prefixed with /api
 app.use('/', router);
-app.use(timeout(12000000));
 
 // START THE SERVER
 // =============================================================================
