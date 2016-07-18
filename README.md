@@ -25,3 +25,7 @@ header and doesn't add those to the address to scrape.
 At the moment the app is limited to 100 pages. I couldn't quite figure out a way to limit this more dynamically. If I
 had more time then I would have the site map to be multi-tiered. I've seen some WordPress sites do this. So the top
 level would be authors, posts and comments. Click through on each section for all authors, posts etc.
+
+I've also had to code out any references that start with '/cdn-cgi'. This was followed by a #[guid] or something
+similar. Each page load would there for place a unique '/cdn-cgi' in the object meaning it constantly just checked that
+page. I could of removed the #[guid] from the string but '/cdn-cgi' didn't seem to add much value anyway.
