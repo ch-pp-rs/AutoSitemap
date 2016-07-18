@@ -6,7 +6,7 @@ exports.list = function (req, res) {
   var sitemapUrl = req.query.url,
       sitemap = {},
       noRequests = 0,
-      limit = 50,
+      limit = 100,
       alternates = {},
       canonical = '';
 
